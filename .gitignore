@@ -1,0 +1,5 @@
+/hystrix-dashboard/
+/cloud-config/
+/gateway/
+/discovery/
+/amq/
