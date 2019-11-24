@@ -15,3 +15,29 @@ hystrix:
           thread:
             timeoutInMilliseconds: 5000
 
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: Hystrix_Stream
+        uri: http://httpbin.org:80
+        predicates:
+        - Host=**localhost:8088
+        - Path=/actuator/hystrix.stream
+        filters:
+        - Hystrix=Hystrix_Stream
+      - id: securityService
+        uri: http://localhost:8092/
+        predicates:
+        - Host=**localhost:8088
+        - Path=/**
+        filters:
+        - Hystrix=SecurityService
+        - CustomFilter
+      - id: Hystrix_Com
+        uri: http://httpbin.org:80
+        predicates:
+        - Host=*.hystrix.com
+        filters:
+        - Hystrix=HystrixCom
+        
