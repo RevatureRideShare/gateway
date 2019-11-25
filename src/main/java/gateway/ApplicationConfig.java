@@ -10,8 +10,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ApplicationConfig {
 
-
-
   /**
    * ! This bean sets up the routes that Spring Cloud Gateway uses to redirect requests to and from
    * Spring Security along with all Controllers.

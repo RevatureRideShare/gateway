@@ -16,6 +16,8 @@ hystrix:
             timeoutInMilliseconds: 5000
 
 spring:
+  application:
+    name: gateway-service
   cloud:
     gateway:
       routes:
@@ -41,3 +43,8 @@ spring:
         filters:
         - Hystrix=HystrixCom
         
+eureka:
+  client:
+    registry-fetch-interval-seconds: 5
+    service-url:
+      defaultZone: http://localhost:8761/eureka  
