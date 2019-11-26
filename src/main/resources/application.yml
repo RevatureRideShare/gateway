@@ -34,12 +34,17 @@ spring:
         filters:
         - Hystrix=Hystrix_Stream
       - id: securityService
-        uri: http://localhost:8092/
+        #uri: http://localhost:8092/
+        #uri: lb://security-service
+        uri: lb://admin-service
+        #uri: lb://{application}
         predicates:
         - Host=**localhost:8088
         - Path=/**
+        #- Path=/{application}/**
         filters:
-        - Hystrix=SecurityService
+        #- Hystrix=security-service
+        - Hystrix=admin-service
         #- CustomFilter
       - id: Hystrix_Com
         uri: http://httpbin.org:80
@@ -47,7 +52,7 @@ spring:
         - Host=*.hystrix.com
         filters:
         - Hystrix=HystrixCom
-        
+       
         # service name instead of URI
         # global filter instead of custom filter for sending to the security service.
         # login needs a special custom filter because it's getting a jwt whereas the other ones are including the jwt.
