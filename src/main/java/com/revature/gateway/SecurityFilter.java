@@ -1,7 +1,5 @@
 package com.revature.gateway;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
@@ -23,51 +21,62 @@ public class SecurityFilter implements GlobalFilter {
   public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
     System.out.println("Security filter starting.");
     String requestEndpoint = exchange.getRequest().getURI().getPath();
+    String host = "localhost";
+    String port = "8092";
     HttpMethod requestHttpMethod = exchange.getRequest().getMethod();
 
-    URL obj;
-    try {
-      System.out.println("HTTP" + "://" + "localhost" + ":" + "8092" + requestEndpoint);
-      obj = new URL("HTTP" + "://" + "localhost" + ":" + "8092" + requestEndpoint);
+    // Checking to see if path hits the POST /login or POST /user endpoints,
+    // if the path matches the two endpoints, ignore the rest of the logic.
+    if ((requestEndpoint.contentEquals("/login") || requestEndpoint.contentEquals("/user"))
+        && requestHttpMethod.equals(HttpMethod.POST)) {
+      return chain.filter(exchange).then(Mono.fromRunnable(() -> {
+        System.out.println("POST /login & /user endpoints would be hit, but they are ignored.");
+      }));
+    }
 
+    try {
+      System.out.println("HTTP://" + host + ":" + port + requestEndpoint);
+      // Creating HTTP Request to the security service.
+      URL obj;
+      obj = new URL("HTTP://" + host + ":" + port + requestEndpoint);
       HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+      con.setRequestMethod(requestHttpMethod.toString());
       try {
+        // Attaching JWT to the request header.
         List<String> token = exchange.getRequest().getHeaders().get("Authorization");
         System.out.println(token);
         con.setRequestProperty("Authorization", token.get(0));
       } catch (Exception e) {
+        // Catching this error is only for testing purposes.
+        // Chances are the error will appear because the JWT is not in the original request,
+        // which might be fine depending on the request.
         e.printStackTrace();
       }
-      con.setRequestMethod(requestHttpMethod.toString());
+
+      // Sending the HTTP Request to the security service.
       int responseCode = con.getResponseCode();
-      // If the response code is an "OK".
       if (responseCode == HttpURLConnection.HTTP_OK) {
-        // Get the response.
-        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-        String inputLine;
-        StringBuffer response = new StringBuffer();
-
-        while ((inputLine = in.readLine()) != null) {
-          response.append(inputLine);
-        }
-        in.close();
-
-        // Print the response. 
-        System.out.println(response.toString());
+        // If the response code is an "OK".
+        System.out.println("The response from the security service was ok.");
+        // Send the original request to the next filter.
         return chain.filter(exchange);
       } else {
+        // If the response is bad, print the response code.
         System.out.println("Request did not work. Status Code: " + responseCode);
+        // Change the response to the response sent by the security 
+        // service (probably 403 due to failed authorization).
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(HttpStatus.resolve(responseCode));
-
+        // Send the response back to the client.
         return response.setComplete();
       }
 
     } catch (Exception e) {
-      // If the response is bad. Throw error.
+      // If creating the HTTP request is bad. Throw error.
       e.printStackTrace();
       return null;
     }
+
   }
 
 }

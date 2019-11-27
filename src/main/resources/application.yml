@@ -13,7 +13,7 @@ hystrix:
       execution:
         isolation:
           thread:
-            timeoutInMilliseconds: 5000
+            timeoutInMilliseconds: 10000
 
 spring:
   application:
@@ -26,6 +26,7 @@ spring:
         locator:
           enabled: true
       routes:
+
       - id: Hystrix_Stream
         uri: http://httpbin.org:80
         predicates:
@@ -33,28 +34,25 @@ spring:
         - Path=/actuator/hystrix.stream
         filters:
         - Hystrix=Hystrix_Stream
+        
       - id: authService
-        uri: lb://user-service
-        #uri: lb://{application}
+        uri: lb://security-service
         predicates:
         - Host=**localhost:8088
         - Path=/login, /user
         filters:
         - Hystrix=security-service
-        - Hystrix=user-service
-        - AuthFilter
+        
       - id: securityService
-        #uri: http://localhost:8092/
-        #uri: lb://security-service
         uri: lb://user-service
         #uri: lb://{application}
         predicates:
         - Host=**localhost:8088
         - Path=/**
-        #- Path=/{application}/**
         filters:
         - Hystrix=security-service
         - Hystrix=unknown-service
+
       - id: Hystrix_Com
         uri: http://httpbin.org:80
         predicates:
@@ -62,12 +60,8 @@ spring:
         filters:
         - Hystrix=HystrixCom
        
-        # service name instead of URI
-        # global filter instead of custom filter for sending to the security service.
-        # login needs a special custom filter because it's getting a jwt whereas the other ones are including the jwt.
-        
-#eureka:
-#  client:
-#    registry-fetch-interval-seconds: 5
-#    service-url:
-#      defaultZone: http://localhost:8761/eureka  
+eureka:
+  client:
+    registry-fetch-interval-seconds: 5
+    service-url:
+      defaultZone: http://localhost:8761/eureka  
