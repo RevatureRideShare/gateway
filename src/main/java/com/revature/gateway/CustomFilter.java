@@ -1,4 +1,4 @@
-package gateway;
+package com.revature.gateway;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

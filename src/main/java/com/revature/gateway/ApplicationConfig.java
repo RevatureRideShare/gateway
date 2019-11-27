@@ -1,4 +1,4 @@
-package gateway;
+package com.revature.gateway;
 
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
