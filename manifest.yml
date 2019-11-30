@@ -1,0 +1,8 @@
+applications:
+- name: rideshare-gateway
+  instances: 1
+  memory: 800M
+  path: target/gs-gateway-0.0.1-SNAPSHOT.jar
+  buildpacks: 
+    - http://github.com/cloudfoundry/java-buildpack
+    
