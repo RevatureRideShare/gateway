@@ -51,7 +51,7 @@ spring:
         filters:
         - Hystrix=security-service
         
-      - id: securityService
+      - id: userService
         uri: lb://user-service
         #uri: lb://{application}
         predicates:
@@ -59,7 +59,7 @@ spring:
         - Path=/**
         filters:
         - Hystrix=security-service
-        - Hystrix=unknown-service
+        - Hystrix=user-service
 
       - id: Hystrix_Com
         uri: http://httpbin.org:80
