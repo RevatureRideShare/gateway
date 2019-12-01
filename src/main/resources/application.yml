@@ -47,6 +47,7 @@ spring:
         uri: lb://security-service
         predicates:
         - Host=**localhost:8088
+        - Method=POST
         - Path=/login, /user
         filters:
         - Hystrix=security-service
