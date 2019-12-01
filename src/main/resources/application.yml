@@ -34,7 +34,15 @@ spring:
         - Path=/actuator/hystrix.stream
         filters:
         - Hystrix=Hystrix_Stream
-        
+       
+      - id: locationService
+        uri: lb://location-service
+        predicates:
+        - Host=**localhost:8088
+        - Path=/housing-location, /training-location
+        filters:
+        - Hystrix=location-service
+      
       - id: authService
         uri: lb://security-service
         predicates:
@@ -43,7 +51,7 @@ spring:
         filters:
         - Hystrix=security-service
         
-      - id: securityService
+      - id: userService
         uri: lb://user-service
         #uri: lb://{application}
         predicates:
@@ -51,7 +59,7 @@ spring:
         - Path=/**
         filters:
         - Hystrix=security-service
-        - Hystrix=unknown-service
+        - Hystrix=user-service
 
       - id: Hystrix_Com
         uri: http://httpbin.org:80
