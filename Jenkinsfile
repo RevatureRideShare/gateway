@@ -11,70 +11,112 @@ pipeline {
   		buildDiscarder(logRotator(numToKeepStr: '10'))
   	}
 
+    environment{
+        SONAR_SCANNER_VERSION="4.2.0.1873"
+        SONAR_SCANNER_HOME="$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux"
+        PATH="$SONAR_SCANNER_HOME/bin:$PATH"
+        SONAR_SCANNER_OPTS="-server" 
+        ORG="RevatureRideShare"
+        REPO="gateway"       
+    }
+
     stages {
 
-        stage ('Build') {
+        stage('Clean') {
             steps {
-                
                 deleteDir()
-                checkout scm
-                
-                // Run in non-interactive (batch) mode
-                sh 'mvn -U -B -DskipTests clean package'
-            
             }
         }
 
-        stage ('Test') {
+        stage('Checkout') {
             steps {
-            	sh 'mvn verify checkstyle:checkstyle'
-            	withSonarQubeEnv(credentialsId: 'b44ffadc-08d5-11ea-8d71-362b9e155667', installationName:'SonarCloud'){
-                	sh '''
-                    export SONAR_SCANNER_VERSION=4.2.0.1873
-                    export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux
-                    export PATH=$SONAR_SCANNER_HOME/bin:$PATH
-                    export SONAR_SCANNER_OPTS="-server"
-                    
-                    sonar-scanner \
-                    -Dsonar.projectKey=RevatureRideShare_gateway \
-                    -Dsonar.organization=b44ffadc-08d5-11ea-8d71-362b9e155667 \
-                    -Dsonar.sources=. \
-                    -Dsonar.host.url=https://sonarcloud.io/ \
-                    -Dsonar.login=f8aed430569e55940896c6f7c967d6a05efca071 \
-                    -Dsonar.java.binaries=target/classes
-                    '''
+                checkout scm
+            }
+        }
+
+        stage ('Build') {
+            steps {                
+                // Run in non-interactive (batch) mode
+                sh 'mvn -U -B -DskipTests clean package'
+            }
+        }
+
+        stage('Checkstyle') { // Code smells
+            steps {
+                sh 'mvn verify checkstyle:checkstyle'
+            }
+        }
+
+        stage('Sonar Analysis') { 
+            // performs a sonar analysis and sends code to sonarcloud
+            steps {
+                script{
+                    if (env.CHANGE_ID) {
+                        echo 'Pull Request Detected...'
+
+                        withSonarQubeEnv(credentialsId: 'b44ffadc-08d5-11ea-8d71-362b9e155667', installationName:'SonarCloud'){                           
+                            sh """
+                             sonar-scanner \
+                                -Dsonar.login=${env.SONAR_LOGIN_TOKEN} \
+                                -Dsonar.pullrequest.base=${env.CHANGE_TARGET} \
+                                -Dsonar.pullrequest.provider=GitHub \
+                                -Dsonar.pullrequest.key=${env.CHANGE_ID} \
+                                -Dsonar.pullrequest.github.repository=${env.ORG}/${env.REPO} \
+                                -Dsonar.pullrequest.branch=${env.CHANGE_BRANCH}
+                            """
+                        }
+                    } else {
+                            withSonarQubeEnv(credentialsId: 'b44ffadc-08d5-11ea-8d71-362b9e155667', installationName:'SonarCloud'){
+                                sh """
+                                sonar-scanner \
+                                -Dsonar.login=${env.SONAR_LOGIN_TOKEN} \
+                                """
+                            }
+                    }   
                 }
             }
         }
         
-  		stage ('QualityGate') {
+  		stage ('Quality Gate') {
   			steps{
+                script{ // Hard code the Analysis URL sent to Slack 
+                        // TODO: find the official url via sonar plugin
+                    def urlComponents = env.JOB_NAME.split("/")
+                    def urlJobName = urlComponents[0]
+                    def urlSonarCloudLink = "https://sonarcloud.io/dashboard?id=RevatureRideShare_" + urlJobName
+                    slackSend message: "Build Started - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>) " +
+                    "View the SonarCloud analysis - " + urlSonarCloudLink
+                } 
   				timeout(time: 1, unit: 'MINUTES'){
   					waitForQualityGate abortPipeline: true
   				}
   			}
   		}
-        
 
+        
         stage ('Deploy') {
             steps {
-                withCredentials([[$class          : 'UsernamePasswordMultiBinding',
+                script{
+                    if(env.BRANCH_NAME == 'master' ){
+                        withCredentials([[$class  : 'UsernamePasswordMultiBinding',
                                   credentialsId   : 'PCF_LOGIN',
                                   usernameVariable: 'USERNAME',
                                   passwordVariable: 'PASSWORD']]) {
-                    sh 'cf events rideshare-security-service'
-					sh 'cf logs rideshare-security-service --recent'
-                    sh 'cf login -a http://api.run.pivotal.io -u $USERNAME -p $PASSWORD \
-                    -o "Revature Training" -s development'
-                    sh 'cf push'
+                        sh 'cf events rideshare-security-service'
+					    sh 'cf logs rideshare-security-service --recent'
+                        sh 'cf login -a http://api.run.pivotal.io -u $USERNAME -p $PASSWORD \
+                        -o "Revature Training" -s development'
+                        sh 'cf push'
+                        }
+                    }   
                 }
             }
         }
     }
-        
-     post{
-       	always{
-        	deleteDir()
+  
+    post{
+        always{
+            deleteDir()
         }
     }
 }
