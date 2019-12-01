@@ -19,7 +19,6 @@ public class SecurityFilter implements GlobalFilter {
 
   @Override
   public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-    System.out.println("Security filter starting.");
     String requestEndpoint = exchange.getRequest().getURI().getPath();
     String host = "localhost";
     String port = "8092";
@@ -30,12 +29,10 @@ public class SecurityFilter implements GlobalFilter {
     if ((requestEndpoint.contentEquals("/login") || requestEndpoint.contentEquals("/user"))
         && requestHttpMethod.equals(HttpMethod.POST)) {
       return chain.filter(exchange).then(Mono.fromRunnable(() -> {
-        System.out.println("POST /login & /user endpoints would be hit, but they are ignored.");
       }));
     }
 
     try {
-      System.out.println("HTTP://" + host + ":" + port + requestEndpoint);
       // Creating HTTP Request to the security service.
       URL obj;
       obj = new URL("HTTP://" + host + ":" + port + requestEndpoint);
@@ -44,7 +41,6 @@ public class SecurityFilter implements GlobalFilter {
       try {
         // Attaching JWT to the request header.
         List<String> token = exchange.getRequest().getHeaders().get("Authorization");
-        System.out.println(token);
         con.setRequestProperty("Authorization", token.get(0));
       } catch (Exception e) {
         // Catching this error is only for testing purposes.
@@ -57,12 +53,10 @@ public class SecurityFilter implements GlobalFilter {
       int responseCode = con.getResponseCode();
       if (responseCode == HttpURLConnection.HTTP_OK) {
         // If the response code is an "OK".
-        System.out.println("The response from the security service was ok.");
         // Send the original request to the next filter.
         return chain.filter(exchange);
       } else {
         // If the response is bad, print the response code.
-        System.out.println("Request did not work. Status Code: " + responseCode);
         // Change the response to the response sent by the security 
         // service (probably 403 due to failed authorization).
         ServerHttpResponse response = exchange.getResponse();
