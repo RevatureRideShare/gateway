@@ -14,14 +14,14 @@ import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties = {"httpbin=http://localhost:${wiremock.server.port}"})
-@AutoConfigureWireMock(port = 0)
+// @RunWith(SpringRunner.class)
+// @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+//     properties = {"httpbin=http://localhost:${wiremock.server.port}"})
+// @AutoConfigureWireMock(port = 0)
 public class ApplicationTest {
 
-  @Autowired
-  private WebTestClient webClient;
+//   @Autowired
+//   private WebTestClient webClient;
 
 //   @Test
 //   public void contextLoads() throws Exception {
