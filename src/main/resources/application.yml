@@ -1,0 +1,76 @@
+server:
+  port: 8088
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: hystrix.stream
+
+hystrix:
+  command:
+    fallbackcmd:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 10000
+
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    config:
+      uri: http://localhost:8888
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+
+      - id: Hystrix_Stream
+        uri: http://httpbin.org:80
+        predicates:
+        - Host=**localhost:8088
+        - Path=/actuator/hystrix.stream
+        filters:
+        - Hystrix=Hystrix_Stream
+       
+      - id: locationService
+        uri: lb://location-service
+        predicates:
+        - Host=**localhost:8088
+        - Path=/housing-location, /training-location
+        filters:
+        - Hystrix=location-service
+      
+      - id: authService
+        uri: lb://security-service
+        predicates:
+        - Host=**localhost:8088
+        - Method=POST
+        - Path=/login, /user
+        filters:
+        - Hystrix=security-service
+        
+      - id: userService
+        uri: lb://user-service
+        #uri: lb://{application}
+        predicates:
+        - Host=**localhost:8088
+        - Path=/**
+        filters:
+        - Hystrix=security-service
+        - Hystrix=user-service
+
+      - id: Hystrix_Com
+        uri: http://httpbin.org:80
+        predicates:
+        - Host=*.hystrix.com
+        filters:
+        - Hystrix=HystrixCom
+       
+eureka:
+  client:
+    registry-fetch-interval-seconds: 5
+    service-url:
+      defaultZone: http://localhost:8761/eureka  
