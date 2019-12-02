@@ -19,8 +19,8 @@ import reactor.core.publisher.Mono;
 @Component
 public class SecurityFilter implements GlobalFilter {
 
-  @Value("#{environment.RIDESHARE_1909_HOST}")
-  private String host;
+  @Value("#{environment.RIDESHARE_1909_SECURITY_HOST}")
+  private String securityHost;
   @Value("#{environment.RIDESHARE_1909_SECURITY_PORT}")
   private String securityPort;
 
@@ -57,7 +57,7 @@ public class SecurityFilter implements GlobalFilter {
     try {
       // Creating HTTP Request to the security service.
       URL obj;
-      obj = new URL("HTTP://" + host + ":" + securityPort + requestEndpoint);
+      obj = new URL("HTTP://" + securityHost + ":" + securityPort + requestEndpoint);
       log.info("Trying URL of " + obj);
       HttpURLConnection con = (HttpURLConnection) obj.openConnection();
       con.setRequestMethod(requestHttpMethod.toString());
