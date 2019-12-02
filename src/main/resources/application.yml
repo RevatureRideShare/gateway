@@ -25,6 +25,17 @@ spring:
       discovery:
         locator:
           enabled: true
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:4200"
+            allowedMethods:
+            - GET
+            - POST
+            - OPTIONS
+            - PUT
+            - DELETE
+            - PATCH
       routes:
 
       - id: Hystrix_Stream
