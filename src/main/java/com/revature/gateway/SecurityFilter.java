@@ -18,6 +18,9 @@ import reactor.core.publisher.Mono;
 @Component
 public class SecurityFilter implements GlobalFilter {
 
+  private static final String HOST = "localhost";
+  private static final String PORT = "8092";
+
   private static Logger log = Logger.getLogger("SecurityFilter");
 
   @Override
@@ -26,8 +29,6 @@ public class SecurityFilter implements GlobalFilter {
         + " and GatewayFilterChain " + chain);
     String requestEndpoint = exchange.getRequest().getURI().getPath();
     log.info("RequestEndpoint is " + requestEndpoint);
-    String host = "localhost";
-    String port = "8092";
     HttpMethod requestHttpMethod = exchange.getRequest().getMethod();
 
     log.info("Request Http Method is " + requestHttpMethod.toString());
@@ -53,7 +54,7 @@ public class SecurityFilter implements GlobalFilter {
     try {
       // Creating HTTP Request to the security service.
       URL obj;
-      obj = new URL("HTTP://" + host + ":" + port + requestEndpoint);
+      obj = new URL("HTTP://" + HOST + ":" + PORT + requestEndpoint);
       log.info("Trying URL of " + obj);
       HttpURLConnection con = (HttpURLConnection) obj.openConnection();
       con.setRequestMethod(requestHttpMethod.toString());
