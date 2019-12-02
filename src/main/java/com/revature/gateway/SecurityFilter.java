@@ -50,12 +50,6 @@ public class SecurityFilter implements GlobalFilter {
       }));
     }
 
-    if (requestHttpMethod.equals(HttpMethod.OPTIONS)) {
-      log.info("Request is an OPTIONS request.");
-      return chain.filter(exchange).then(Mono.fromRunnable(() -> {
-      }));
-    }
-
     try {
       // Creating HTTP Request to the security service.
       URL obj;
@@ -65,9 +59,13 @@ public class SecurityFilter implements GlobalFilter {
       con.setRequestMethod(requestHttpMethod.toString());
       try {
         // Attaching JWT to the request header.
-        List<String> token = exchange.getRequest().getHeaders().get("Authorization");
-        log.info("List of tokens is " + token.toString());
-        con.setRequestProperty("Authorization", token.get(0));
+        if (requestHttpMethod.equals(HttpMethod.OPTIONS)) {
+          log.info("Request is an OPTIONS request.");
+        } else {
+          List<String> token = exchange.getRequest().getHeaders().get("Authorization");
+          log.info("List of tokens is " + token.toString());
+          con.setRequestProperty("Authorization", token.get(0));
+        }
       } catch (Exception e) {
         // Catching this error is only for testing purposes.
         // Chances are the error will appear because the JWT is not in the original request,
@@ -95,7 +93,9 @@ public class SecurityFilter implements GlobalFilter {
         return response.setComplete();
       }
 
-    } catch (Exception e) {
+    } catch (
+
+    Exception e) {
       // If creating the HTTP request is bad. Throw error.
       log.info("Something went wrong with creating the HTTP request");
       e.printStackTrace();
