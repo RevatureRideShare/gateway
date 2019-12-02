@@ -33,6 +33,7 @@ spring:
             allowedOrigins: "http://localhost:4200"
             allowedHeaders: "*"
             allowCredentials: true
+            exposedHeaders: "Authorization"
             allowedMethods:
             - GET
             - POST
