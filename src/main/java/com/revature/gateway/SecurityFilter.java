@@ -41,6 +41,21 @@ public class SecurityFilter implements GlobalFilter {
       }));
     }
 
+    if ((requestEndpoint.contentEquals("/training-location")
+        || requestEndpoint.contentEquals("/housing-location"))
+        && requestHttpMethod.equals(HttpMethod.GET)) {
+      log.info("Request Endpoint is either GET /training-location, OR the endpoint is "
+          + "a /housing-location");
+      return chain.filter(exchange).then(Mono.fromRunnable(() -> {
+      }));
+    }
+
+    if (requestHttpMethod.equals(HttpMethod.OPTIONS)) {
+      log.info("Request is an OPTIONS request.");
+      return chain.filter(exchange).then(Mono.fromRunnable(() -> {
+      }));
+    }
+
     try {
       // Creating HTTP Request to the security service.
       URL obj;
