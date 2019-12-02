@@ -5,6 +5,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.http.HttpMethod;
@@ -18,8 +19,10 @@ import reactor.core.publisher.Mono;
 @Component
 public class SecurityFilter implements GlobalFilter {
 
-  private static final String HOST = "localhost";
-  private static final String PORT = "8092";
+  @Value("#{environment.RIDESHARE_1909_HOST}")
+  private String host;
+  @Value("#{environment.RIDESHARE_1909_SECURITY_PORT}")
+  private String securityPort;
 
   private static Logger log = Logger.getLogger("SecurityFilter");
 
@@ -54,7 +57,7 @@ public class SecurityFilter implements GlobalFilter {
     try {
       // Creating HTTP Request to the security service.
       URL obj;
-      obj = new URL("HTTP://" + HOST + ":" + PORT + requestEndpoint);
+      obj = new URL("HTTP://" + host + ":" + securityPort + requestEndpoint);
       log.info("Trying URL of " + obj);
       HttpURLConnection con = (HttpURLConnection) obj.openConnection();
       con.setRequestMethod(requestHttpMethod.toString());
