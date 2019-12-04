@@ -5,6 +5,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.http.HttpMethod;
@@ -18,6 +19,11 @@ import reactor.core.publisher.Mono;
 @Component
 public class SecurityFilter implements GlobalFilter {
 
+  @Value("#{environment.RIDESHARE_1909_SECURITY_HOST}")
+  private String securityHost;
+  @Value("#{environment.RIDESHARE_1909_SECURITY_PORT}")
+  private String securityPort;
+
   private static Logger log = Logger.getLogger("SecurityFilter");
 
   @Override
@@ -26,8 +32,6 @@ public class SecurityFilter implements GlobalFilter {
         + " and GatewayFilterChain " + chain);
     String requestEndpoint = exchange.getRequest().getURI().getPath();
     log.info("RequestEndpoint is " + requestEndpoint);
-    String host = "localhost";
-    String port = "8092";
     HttpMethod requestHttpMethod = exchange.getRequest().getMethod();
 
     log.info("Request Http Method is " + requestHttpMethod.toString());
@@ -41,18 +45,31 @@ public class SecurityFilter implements GlobalFilter {
       }));
     }
 
+    if ((requestEndpoint.contentEquals("/training-location")
+        || requestEndpoint.contentEquals("/housing-location"))
+        && requestHttpMethod.equals(HttpMethod.GET)) {
+      log.info("Request Endpoint is either GET /training-location, OR the endpoint is "
+          + "a /housing-location");
+      return chain.filter(exchange).then(Mono.fromRunnable(() -> {
+      }));
+    }
+
     try {
       // Creating HTTP Request to the security service.
       URL obj;
-      obj = new URL("HTTP://" + host + ":" + port + requestEndpoint);
+      obj = new URL("HTTP://" + securityHost + ":" + securityPort + requestEndpoint);
       log.info("Trying URL of " + obj);
       HttpURLConnection con = (HttpURLConnection) obj.openConnection();
       con.setRequestMethod(requestHttpMethod.toString());
       try {
         // Attaching JWT to the request header.
-        List<String> token = exchange.getRequest().getHeaders().get("Authorization");
-        log.info("List of tokens is " + token.toString());
-        con.setRequestProperty("Authorization", token.get(0));
+        if (requestHttpMethod.equals(HttpMethod.OPTIONS)) {
+          log.info("Request is an OPTIONS request.");
+        } else {
+          List<String> token = exchange.getRequest().getHeaders().get("Authorization");
+          log.info("List of tokens is " + token.toString());
+          con.setRequestProperty("Authorization", token.get(0));
+        }
       } catch (Exception e) {
         // Catching this error is only for testing purposes.
         // Chances are the error will appear because the JWT is not in the original request,
@@ -80,7 +97,9 @@ public class SecurityFilter implements GlobalFilter {
         return response.setComplete();
       }
 
-    } catch (Exception e) {
+    } catch (
+
+    Exception e) {
       // If creating the HTTP request is bad. Throw error.
       log.info("Something went wrong with creating the HTTP request");
       e.printStackTrace();
